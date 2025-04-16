@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 分析系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        .tab-content {
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-top: none;
+            border-radius: 0 0 0.25rem 0.25rem;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .result {
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">📚 PDF 分析系统</h1>
+        
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="true">摘要</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="golden-tab" data-bs-toggle="tab" data-bs-target="#golden" type="button" role="tab" aria-controls="golden" aria-selected="false">黄金句子</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="qa-tab" data-bs-toggle="tab" data-bs-target="#qa" type="button" role="tab" aria-controls="qa" aria-selected="false">问答</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="compare-tab" data-bs-toggle="tab" data-bs-target="#compare" type="button" role="tab" aria-controls="compare" aria-selected="false">比较</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- 摘要标签页 -->
+            <div class="tab-pane fade show active" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+                <form id="summary-form">
+                    <div class="mb-3">
+                        <label for="summary-file" class="form-label">选择 PDF 文件</label>
+                        <input class="form-control" type="file" id="summary-file" accept=".pdf" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">生成摘要</button>
+                </form>
+                <div id="summary-loading" class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p>正在分析 PDF，这可能需要一些时间...</p>
+                </div>
+                <div id="summary-result" class="result">
+                    <h3>摘要结果</h3>
+                    <div class="card">
+                        <div class="card-body" id="summary-content"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 黄金句子标签页 -->
+            <div class="tab-pane fade" id="golden" role="tabpanel" aria-labelledby="golden-tab">
+                <form id="golden-form">
+                    <div class="mb-3">
+                        <label for="golden-file" class="form-label">选择 PDF 文件</label>
+                        <input class="form-control" type="file" id="golden-file" accept=".pdf" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提取黄金句子</button>
+                </form>
+                <div id="golden-loading" class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p>正在分析 PDF，这可能需要一些时间...</p>
+                </div>
+                <div id="golden-result" class="result">
+                    <h3>黄金句子</h3>
+                    <div id="golden-content"></div>
+                </div>
+            </div>
+            
+            <!-- 问答标签页 -->
+            <div class="tab-pane fade" id="qa" role="tabpanel" aria-labelledby="qa-tab">
+                <form id="qa-form">
+                    <div class="mb-3">
+                        <label for="qa-file" class="form-label">选择 PDF 文件</label>
+                        <input class="form-control" type="file" id="qa-file" accept=".pdf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="question" class="form-label">输入问题</label>
+                        <input type="text" class="form-control" id="question" placeholder="请输入关于 PDF 内容的问题" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">提问</button>
+                </form>
+                <div id="qa-loading" class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p>正在处理问题，这可能需要一些时间...</p>
+                </div>
+                <div id="qa-result" class="result">
+                    <h3>回答</h3>
+                    <div class="card">
+                        <div class="card-body" id="answer-content"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 比较标签页 -->
+            <div class="tab-pane fade" id="compare" role="tabpanel" aria-labelledby="compare-tab">
+                <form id="compare-form">
+                    <div class="mb-3">
+                        <label for="compare-files" class="form-label">选择多个 PDF 文件（至少 2 个）</label>
+                        <input class="form-control" type="file" id="compare-files" accept=".pdf" multiple required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">比较文档</button>
+                </form>
+                <div id="compare-loading" class="loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p>正在比较文档，这可能需要一些时间...</p>
+                </div>
+                <div id="compare-result" class="result">
+                    <h3>比较结果</h3>
+                    <div class="card mb-3">
+                        <div class="card-header">共同主题</div>
+                        <div class="card-body">
+                            <ul id="common-themes"></ul>
+                        </div>
+                    </div>
+                    <div class="card mb-3">
+                        <div class="card-header">相似点</div>
+                        <div class="card-body">
+                            <div id="similar-points"></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">分析</div>
+                        <div class="card-body" id="compare-analysis"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 摘要表单提交
+        document.getElementById('summary-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('summary-file');
+            if (fileInput.files.length === 0) {
+                alert('请选择一个 PDF 文件');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            // 显示加载中
+            document.getElementById('summary-loading').style.display = 'block';
+            document.getElementById('summary-result').style.display = 'none';
+            
+            fetch('/api/summary', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('summary-loading').style.display = 'none';
+                document.getElementById('summary-result').style.display = 'block';
+                
+                if (data.status === 'success') {
+                    document.getElementById('summary-content').textContent = data.summary;
+                } else {
+                    document.getElementById('summary-content').textContent = '错误: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('summary-loading').style.display = 'none';
+                document.getElementById('summary-result').style.display = 'block';
+                document.getElementById('summary-content').textContent = '请求错误: ' + error.message;
+            });
+        });
+        
+        // 黄金句子表单提交
+        document.getElementById('golden-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('golden-file');
+            if (fileInput.files.length === 0) {
+                alert('请选择一个 PDF 文件');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            // 显示加载中
+            document.getElementById('golden-loading').style.display = 'block';
+            document.getElementById('golden-result').style.display = 'none';
+            
+            fetch('/api/golden_sentences', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('golden-loading').style.display = 'none';
+                document.getElementById('golden-result').style.display = 'block';
+                
+                const contentDiv = document.getElementById('golden-content');
+                contentDiv.innerHTML = '';
+                
+                if (data.status === 'success') {
+                    data.golden_sentences.forEach((sentence, index) => {
+                        const card = document.createElement('div');
+                        card.className = 'card mb-3';
+                        
+                        const cardBody = document.createElement('div');
+                        cardBody.className = 'card-body';
+                        
+                        const title = document.createElement('h5');
+                        title.className = 'card-title';
+                        title.textContent = `黄金句子 ${index + 1}`;
+                        
+                        const sentenceText = document.createElement('p');
+                        sentenceText.className = 'card-text';
+                        sentenceText.innerHTML = `<strong>句子:</strong> ${sentence.sentence}`;
+                        
+                        const context = document.createElement('p');
+                        context.className = 'card-text';
+                        context.innerHTML = `<strong>上下文:</strong> ${sentence.context}`;
+                        
+                        const reason = document.createElement('p');
+                        reason.className = 'card-text';
+                        reason.innerHTML = `<strong>原因:</strong> ${sentence.reason}`;
+                        
+                        cardBody.appendChild(title);
+                        cardBody.appendChild(sentenceText);
+                        cardBody.appendChild(context);
+                        cardBody.appendChild(reason);
+                        card.appendChild(cardBody);
+                        contentDiv.appendChild(card);
+                    });
+                } else {
+                    contentDiv.textContent = '错误: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('golden-loading').style.display = 'none';
+                document.getElementById('golden-result').style.display = 'block';
+                document.getElementById('golden-content').textContent = '请求错误: ' + error.message;
+            });
+        });
+        
+        // 问答表单提交
+        document.getElementById('qa-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('qa-file');
+            const question = document.getElementById('question').value.trim();
+            
+            if (fileInput.files.length === 0) {
+                alert('请选择一个 PDF 文件');
+                return;
+            }
+            
+            if (!question) {
+                alert('请输入问题');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('question', question);
+            
+            // 显示加载中
+            document.getElementById('qa-loading').style.display = 'block';
+            document.getElementById('qa-result').style.display = 'none';
+            
+            fetch('/api/ask', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('qa-loading').style.display = 'none';
+                document.getElementById('qa-result').style.display = 'block';
+                
+                if (data.status === 'success') {
+                    document.getElementById('answer-content').textContent = data.answer;
+                } else {
+                    document.getElementById('answer-content').textContent = '错误: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('qa-loading').style.display = 'none';
+                document.getElementById('qa-result').style.display = 'block';
+                document.getElementById('answer-content').textContent = '请求错误: ' + error.message;
+            });
+        });
+        
+        // 比较表单提交
+        document.getElementById('compare-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('compare-files');
+            
+            if (fileInput.files.length < 2) {
+                alert('请选择至少两个 PDF 文件进行比较');
+                return;
+            }
+            
+            const formData = new FormData();
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('files', fileInput.files[i]);
+            }
+            
+            // 显示加载中
+            document.getElementById('compare-loading').style.display = 'block';
+            document.getElementById('compare-result').style.display = 'none';
+            
+            fetch('/api/compare', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('compare-loading').style.display = 'none';
+                document.getElementById('compare-result').style.display = 'block';
+                
+                if (data.status === 'success') {
+                    const result = data.result;
+                    
+                    // 显示共同主题
+                    const themesUl = document.getElementById('common-themes');
+                    themesUl.innerHTML = '';
+                    if (result.common_themes && result.common_themes.length > 0) {
+                        result.common_themes.forEach(theme => {
+                            const li = document.createElement('li');
+                            li.textContent = theme;
+                            themesUl.appendChild(li);
+                        });
+                    } else {
+                        themesUl.innerHTML = '<li>未找到共同主题</li>';
+                    }
+                    
+                    // 显示相似点
+                    const pointsDiv = document.getElementById('similar-points');
+                    pointsDiv.innerHTML = '';
+                    if (result.similar_points && result.similar_points.length > 0) {
+                        result.similar_points.forEach((point, index) => {
+                            const pointDiv = document.createElement('div');
+                            pointDiv.className = 'mb-3';
+                            
+                            const pointTitle = document.createElement('h6');
+                            pointTitle.textContent = `相似点 ${index + 1}`;
+                            
+                            const pointText = document.createElement('p');
+                            pointText.innerHTML = `<strong>内容:</strong> ${point.point}`;
+                            
+                            const docsText = document.createElement('p');
+                            docsText.innerHTML = `<strong>文档:</strong> ${point.documents.join(', ')}`;
+                            
+                            pointDiv.appendChild(pointTitle);
+                            pointDiv.appendChild(pointText);
+                            pointDiv.appendChild(docsText);
+                            pointsDiv.appendChild(pointDiv);
+                        });
+                    } else {
+                        pointsDiv.textContent = '未找到相似点';
+                    }
+                    
+                    // 显示分析
+                    document.getElementById('compare-analysis').textContent = result.analysis || '无分析结果';
+                } else {
+                    document.getElementById('common-themes').innerHTML = '<li>错误: ' + data.message + '</li>';
+                    document.getElementById('similar-points').textContent = '';
+                    document.getElementById('compare-analysis').textContent = '';
+                }
+            })
+            .catch(error => {
+                document.getElementById('compare-loading').style.display = 'none';
+                document.getElementById('compare-result').style.display = 'block';
+                document.getElementById('common-themes').innerHTML = '<li>请求错误: ' + error.message + '</li>';
+                document.getElementById('similar-points').textContent = '';
+                document.getElementById('compare-analysis').textContent = '';
+            });
+        });
+    </script>
+</body>
+</html>
